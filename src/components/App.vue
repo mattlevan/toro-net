@@ -3,18 +3,18 @@
     <nav class="navbar navbar-default">
       <div class="container-fluid">
         <div class="navbar-header">
-          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#bs-example-navbar-collapse-1">
+          <button type="button" class="navbar-toggle" data-toggle="collapse" data-target="#toroNav">
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
           <a class="navbar-brand" href="/">Toro Net</a>
         </div>
-        <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
+        <div class="collapse navbar-collapse" id="toroNav">
           <ul class="nav navbar-nav">
-            <li><a v-if="!this.$store.state.user.displayName" href="/register" @click="register">Register</a></li>
-            <li><a v-if="this.$store.state.user.displayName" href="/logout" >Logout</a></li>
-            <li><a v-if="!this.$store.state.user.displayName" href="/login">Login</a></li>
+            <li v-if="!this.$store.state.user.displayName"><a href="/register">Register</a></li>
+            <li v-if="this.$store.state.user.displayName"><a href="/logout">Logout</a></li>
+            <li v-if="!this.$store.state.user.displayName"><a href="/login">Login</a></li>
           </ul>
         </div>
       </div>
@@ -94,6 +94,10 @@ a {
 }
 .btn-primary:hover {
   background: #EFBA08;
+  color: white;
+}
+.icon-bar {
+  background: white;
   color: white;
 }
 </style>
