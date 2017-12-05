@@ -23,21 +23,6 @@ module.exports = (() => {
     })
   })
   
-  /* Endpoint to provide partial list of posts based on keyword search. */
-  router.get('/list/:keyword', checkAuth, (req,res) => {
-    const regex = { $regex: req.params.keyword }
-    Post.find({$or: [{ title: regex }, { body: regex }]}, 
-      postsProjection, (err, posts) => {
-      if (err) throw err
-      if (!posts || (posts.length < 1) ) {
-        res.json({ posts })   
-      }
-      else {
-        res.json({ posts })
-      }        
-    })
-  })
-  
   /* Endpoint: Delete single post based on new attempt. */
   router.get('/delete/:id', checkAuth, (req, res) => {
     Post.remove( Post.findById(req.params.id), postsProjection,
@@ -109,22 +94,22 @@ module.exports = (() => {
     res.json({})       
   })
   
-  router.post('/create', checkAuth, (req, res) => {
+  router.post('/create', (req, res) => {
     const newPost = new Post({
       userId: req.user.id,
+      username: req.user.username, 
       title: req.body.title,
       body: req.body.body,
       createdOn: new Date
     })
-    console.log("Post created.")
-    Post.create(newPost, postsProjection, (err) => {
-      console.log(newPost)
+    Post.create(newPost, (err) => {
       if (err) {
+        console.log('Error detected: ', err)
         res.status(409).send()
-        throw err
       }
       else {
-        res.status(200).send()
+        console.log('Post created successfully!')
+        res.redirect('/')
       }
     })
   })
@@ -143,17 +128,17 @@ module.exports = (() => {
     })
   })
   
-  router.get('/:id', checkAuth, (req, res) => {
-    Post.find(Post.findById(req.params.id), postsProjection,  
-      (err, result) => {
-      console.log('Endpoint: Read Post')
+  /* The User object returned by passport does not have userId, switched 
+   * to username */
+  router.get('/list/:username', checkAuth, (req, res) => {
+    Post.find({ 'username': req.params.username }, (err, result) => {
       if (err) {
-        console.log("Post record doesn't exist!")
-        res.status(204).send()
+        console.log("Error: ", err)
+        res.status(200).send()
       }
       else {
-        console.log('Post found')
-        res.send(JSON.stringify(result))
+        console.log('Post Successfully Retrived')
+        res.send(result)
       }
     })
   })    

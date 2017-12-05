@@ -6,6 +6,9 @@ var Post = new Schema({
   userId: {
     type: String,
   },
+  username : {
+    type: String, 
+  },
   title: {
     type: String,
     required: true,
