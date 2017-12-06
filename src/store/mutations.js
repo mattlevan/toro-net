@@ -21,5 +21,11 @@ export const mutations = {
   },
   [types.ADD_POST] (state, posts_payload) {
     state.posts = posts_payload
+  }, 
+  [types.SET_FRIENDS] (state, friend_payload) {
+    state.friends = friend_payload
+  },
+  [types.GET_FRIEND] (state, friend_payload) {
+    state.friends = friend_payload
   }
 }

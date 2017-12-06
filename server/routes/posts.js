@@ -1,8 +1,14 @@
 const express = require('express'),
-      Post = require('../models/post')
+      Post = require('../models/post'),
+      axios = require('axios')
 
 // Functions imported with 'require' must be set to var, not const.
 var checkAuth = require('./index.js').checkAuth
+
+/* apoc require statement must always go after the explicit loading of the 
+ * .env file */
+require('dotenv').load()
+const apoc = require('apoc')
 
 module.exports = (() => {
 
@@ -94,9 +100,9 @@ module.exports = (() => {
     res.json({})       
   })
   
+  /* Used by toro-net */
   router.post('/create', (req, res) => {
     const newPost = new Post({
-      userId: req.user.id,
       username: req.user.username, 
       title: req.body.title,
       body: req.body.body,
@@ -114,6 +120,27 @@ module.exports = (() => {
     })
   })
   
+  /* Used by test-script */
+  router.post('/create/api', (req, res) => {
+    console.log(req.body)
+    const newPost = new Post({
+      username: req.body.username, 
+      title: req.body.title,
+      body: req.body.body,
+      createdOn: new Date
+    })
+    Post.create(newPost, (err) => {
+      if (err) {
+        console.log('Error detected: ', err)
+        res.status(409).send()
+      }
+      else {
+        console.log('Post created successfully!')
+        res.redirect('/')
+      }
+    })
+  })
+
   router.put('/update/:id', checkAuth, (req, res, next) => {
     console.log("EndPoint : update Post")
     Post.update(Post.findById(req.params.id), req.body, (err, result) => {
@@ -131,15 +158,60 @@ module.exports = (() => {
   /* The User object returned by passport does not have userId, switched 
    * to username */
   router.get('/list/:username', checkAuth, (req, res) => {
-    Post.find({ 'username': req.params.username }, (err, result) => {
-      if (err) {
-        console.log("Error: ", err)
-        res.status(200).send()
+    const queryString = 
+      `MATCH (u:User {username: '${req.params['username']}'})-[r:isFriends*1..1]-(v:User)
+      WHERE u <> v
+      RETURN r`
+    const query = apoc.query(queryString)
+    
+    query.exec().then((result) => {
+      var resultMap = new Map()
+      
+      /* Do not change variables back to const!! */
+      for (var i = 0; i < result[0]['data'].length; i++) {
+        var dataList = result[0]['data'][i]['row'][0]
+        for (var j = 0; j < dataList.length; j++) {
+          var rowNames = dataList[j]['connects'].split('<-->')
+          rowNames = rowNames.sort()
+          if ( resultMap.has(rowNames[0]) ) {
+            if ( !resultMap.get(rowNames[0]).includes(rowNames[1]) ) {
+              resultMap.get(rowNames[0]).push(rowNames[1])
+            }
+          } else {
+            resultMap.set(rowNames[0], [rowNames[1]])
+          }
+        }
       }
-      else {
-        console.log('Post Successfully Retrived')
-        res.send(result)
-      }
+      var friendList = [] 
+      resultMap.forEach((value, key) => {
+        friendList.push(value)
+      })
+      friendList[0].push(req.params['username'])
+      
+      Post.find().where('username').in(friendList[0]).exec(function (err, records) {
+        if (err) {
+          console.log("Error: ", err)
+          res.status(400).send()
+        } else {
+          console.log('Post Successfully Retrived')
+          console.log(records)
+          res.send(records)
+        }
+      })
+
+      // Post.find({ 'username': req.params.username }, (err, result) => {
+      //   if (err) {
+      //     console.log("Error: ", err)
+      //     res.status(200).send()
+      //   }
+      //   else {
+      //     console.log('Post Successfully Retrived')
+      //     console.log(result)
+      //     res.send(result)
+      //   }
+      // })
+    }, (fail) => {
+      console.log(fail) 
     })
   })    
   

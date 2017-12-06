@@ -1,7 +1,7 @@
 <template>
   <div class="container" v-if="this.$store.state.user.displayName">
     <h4>Welcome {{this.$store.state.user.username}}! What's happening?</h4>
-    <br>
+    <r>
     <form @submit.prevent="validateBeforeSubmit" id="post" action="/posts/create" method="post">
       <div class="form-group" :class="{'has-error': errors.has('title') }" >
         <label for="title" class="pull-left">Title</label>
@@ -17,8 +17,23 @@
     </form>
     <button class="btn btn-primary" form="post" type="submit">Post</button>
     <hr>
-    <div class="postContainer" v-if="this.userPosts">
-      <h4>Your posts: {{this.userPosts}}</h4>
+    <div class="postContainer" v-if="updatePosts">
+      <a v-for="post in this.postList">
+        <div class="container">
+          <div class="row">
+            <h2 class="text-left">{{ post.title }}</h2> <br/>
+            <h4 class="text-left">{{ post.body }}</h4> <br/>
+            <div class="text-left col-xs-5">
+              {{ post.author }}
+            </div>
+            <div class="text-right col-xs-5 col-xs-push-2width">
+              {{ post.published }}
+            </div>
+            <button v-on:click="displayShortestPath(post)">Shortest Path</button>
+          </div>
+        </div>
+        <hr>
+      </a>
     </div>
     <div class="noPostsContainer" v-else> You have no posts :( </div>
   </div>
@@ -35,16 +50,50 @@ export default {
   name: 'Home',
   data: {
     postsRetrieved: false,
-    userPosts: {},
+    friendsRetrieved: false, 
+    postList: {},
+  },
+  computed : {
+    updatePosts: function() {
+      const currentPosts = this.$store.getters.listOfPosts
+      const importantAttributes = {}
+      
+      if (this.postsRetrieved) {
+        for (var i = 0; i < currentPosts.length; i ++) {
+          importantAttributes[currentPosts.length - i - 1] = {
+            author: currentPosts[i].username,
+            title: currentPosts[i].title,
+            body: currentPosts[i].body,
+            published: currentPosts[i].createdOn
+          }
+        }
+
+        this.postList = importantAttributes
+        return true
+      }
+
+      return false
+    }
   },
   methods: {
+    displayShortestPath(friend){
+      const destination = friend['author']
+      console.log("SHOREST PATH", destination)
+      if (destination == this.$store.state.user.username) {
+        alert('Thats you dummy!')
+      } else {
+        this.$store.dispatch('getPosts', userName).then(res => {
+          console.log(this.$store.state.friends)
+        }, err => {
+          console.log("Error", err)
+        })
+      }
+    },
     validateBeforeSubmit(e) {
       e.preventDefault()
       this.$validator.validateAll().then((result) => {
         if (result) {
           document.querySelector('#post').submit()
-          // Do we want to store posts in the VueX store?
-          // this.$store.dispatch('addPost', this.$store.state.posts)
           return
         }
       })
@@ -52,19 +101,20 @@ export default {
     getPostsFromDB(){
       if (!this.postsRetrieved) {
         const userName = this.$store.state.user.username
+        
         this.$store.dispatch('getPosts', userName).then(res => {
-          // this.userPosts = Object.assign({}, this.userPosts, this.$store.state.posts)
-          console.log("STATE POSTS: ", this.$store.state.posts['0'])
+          console.log(this.$store.state.friends)
         }, err => {
           console.log("Error", err)
         })
 
+        console.log("Posts retrieved")
         this.postsRetrieved = true
       }
     }
   },
   mounted() {
-    this.$store.dispatch('getUser')
+    // this.$store.dispatch('getUser')
   },
   updated() {
     this.getPostsFromDB()

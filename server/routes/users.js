@@ -175,10 +175,10 @@ module.exports = (() => {
      * degree parameter is 2 it returns friends-of-friends etc. for larger 
      * values. List returned does not include relationship details. 
      */
-
+    
     const queryString = 
       `MATCH (a:User), (b:User)
-      WHERE a.username="${req.params['username']}" and (a) -[:friend*1..${req.params['degree']}]- (b)
+      WHERE a.username="${req.params['username']}" and (a) -[:isFriends*1..${req.params['degree']}]- (b)
       RETURN distinct b.username`
     const query = apoc.query(queryString)
 
@@ -202,19 +202,21 @@ module.exports = (() => {
   router.get('/list/friend/connections/:username/:degree', (req, res) => {
     /* Returns a JSON object where each key is a user in the friend graph and 
      * each value is a list of users the key user is connected to. */
-
     const queryString = 
-      `MATCH (u:User {username: '${req.params['username']}'})-[r:friend*1..${req.params['degree']}]-(v:User)
+      `MATCH (u:User {username: '${req.params['username']}'})-[r:isFriends*1..${req.params['degree']}]-(v:User)
       WHERE u <> v
       RETURN r`
     const query = apoc.query(queryString)
     
     query.exec().then((result) => {
-      const resultMap = new Map()
-      for (const i = 0; i < result[0]['data'].length; i++) {
-        const dataList = result[0]['data'][i]['row'][0]
-        for (const j = 0; j < dataList.length; j++) {
-          const rowNames = dataList[j]['connects'].split('<-->')
+      var resultMap = new Map()
+      
+      /* Do not change variables back to const!! */
+      for (var i = 0; i < result[0]['data'].length; i++) {
+        var dataList = result[0]['data'][i]['row'][0]
+        console.log(dataList)
+        for (var j = 0; j < dataList.length; j++) {
+          var rowNames = dataList[j]['connects'].split('<-->')
           rowNames = rowNames.sort()
           if ( resultMap.has(rowNames[0]) ) {
             if ( !resultMap.get(rowNames[0]).includes(rowNames[1]) ) {
@@ -225,10 +227,11 @@ module.exports = (() => {
           }
         }
       }
-      const jsonObj = {}
+      var jsonObj = {}
       resultMap.forEach((value, key) => {
         jsonObj[key] = value
       })
+      console.log('JSON OBJECT: ', jsonObj)
       res.json(jsonObj)
     }, (fail) => {
       console.log(fail) 
@@ -249,20 +252,25 @@ module.exports = (() => {
     const query = apoc.query(queryString)
 
     query.exec().then((result) => {
-      const resultArray = []
-      const dataLength = result[0]['data'][0]['row'][0].length
-      for (var i = 0; i < dataLength; i++) {
-        if(JSON.stringify(result[0]['data'][0]['row'][0][i]).search('username') != -1) {
-          resultArray.push(result[0]['data'][0]['row'][0][i])
+      if (result[0]['data'][0] == null) {
+        res.json({})
+      } else { 
+        var resultArray = []
+        var dataLength = result[0]['data'][0]['row'][0].length
+        for (var i = 0; i < dataLength; i++) {
+          if(JSON.stringify(result[0]['data'][0]['row'][0][i]).search('username') != -1) {
+            resultArray.push(result[0]['data'][0]['row'][0][i])
+          }
         }
+        console.log(resultArray)
+        res.json({
+          'data': resultArray,
+          'length': dataLength
+        })
       }
-      console.log(resultArray)
-      res.json({
-        'data': resultArray,
-        'length': dataLength
-      })
     }, (fail) => {
       console.log(fail)
+      res.json({})
     })
   })
   
