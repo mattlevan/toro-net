@@ -87,15 +87,11 @@ def gen_friendships(user_list, friend_prob=0.50):
                 friend_pairs.append([i1, i2])
     return friend_pairs
 
-def test_shortestpath(url):
-    post_req = requests.get(url)
-    if post_req.status_code != 200:
-        print("cool")
-    else:
-        print(post_req.status_code)
+
+def generate_posts(new_users):
+    pass
 
 
 new_users = get_random_user(num_users=5)
 add_users(url='http://localhost:3000/users/register', user_list=new_users)
 create_friendships(url='http://localhost:3000/users/add/friend', user_list=new_users, friend_prob=0.50)
-#test_shortestpath(url='http://localhost:3000/users/list/friend/shortest/Piper36/Lela98')

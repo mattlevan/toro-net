@@ -1,4 +1,6 @@
 export const GET_USER  = 'GET_USER'
+export const SET_FRIENDS = 'SET_FRIENDS'
+export const GET_FRIEND = 'GET_FRIEND'
 export const GET_COUNT = 'GET_COUNT'
 export const INC_COUNT = 'INC_COUNT'
 export const REGISTER  = 'REGISTER'

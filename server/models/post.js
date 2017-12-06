@@ -3,8 +3,8 @@ const mongoose = require('mongoose'),
       User = require('../models/user')
 
 var Post = new Schema({
-  userId: {
-    type: String,
+  username : {
+    type: String, 
   },
   title: {
     type: String,
